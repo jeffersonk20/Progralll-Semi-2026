@@ -57,4 +57,40 @@ ALTER TABLE `clientes`
 --
 ALTER TABLE `clientes`
   MODIFY `idCliente` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `periodos_actividades_economicas`
+--
+
+CREATE TABLE `periodos_actividades_economicas` (
+  `idPeriodo` int(10) NOT NULL AUTO_INCREMENT,
+  `idCliente` int(10) NOT NULL,
+  `desde` date NOT NULL,
+  `hasta` date NOT NULL,
+  `balance` decimal(12,2) NOT NULL,
+  `codigo` char(10) NOT NULL DEFAULT '11801',
+  `precio` decimal(10,2) NOT NULL,
+  `estado` varchar(30) NOT NULL DEFAULT 'Histórico',
+  `precio_base` decimal(10,2) DEFAULT NULL,
+  `adicional` decimal(10,2) DEFAULT NULL,
+  `porcentaje` decimal(5,2) DEFAULT 0.00,
+  `formula` varchar(255) DEFAULT NULL,
+  `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`idPeriodo`),
+  KEY `fk_periodos_cliente` (`idCliente`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `periodos_actividades_economicas`
+--
+
+INSERT INTO `periodos_actividades_economicas` (`idPeriodo`, `idCliente`, `desde`, `hasta`, `balance`, `codigo`, `precio`, `estado`, `precio_base`, `adicional`, `porcentaje`, `formula`) VALUES
+(1, 1, '2022-01-01', '2023-01-01', '700.00', '11801', '2.10', 'Histórico', '1.50', '3.00', '0.00', '1.50 + ((700.00 - 500.00) / 1,000 * 3.00)'),
+(2, 1, '2023-01-01', '2024-01-01', '545.00', '11801', '4.50', 'Histórico', '1.50', '3.00', '0.00', '1.50 + (CEIL((545.00 - 500.01) / 1000) * 3.00)'),
+(3, 1, '2024-01-01', '2025-01-01', '550.00', '11801', '4.50', 'Histórico', '1.50', '3.00', '0.00', '1.50 + (CEIL((550.00 - 500.01) / 1000) * 3.00)'),
+(4, 1, '2025-01-01', '2026-01-01', '550.00', '11801', '4.50', 'Histórico', '1.50', '3.00', '0.00', '1.50 + (CEIL((550.00 - 500.01) / 1000) * 3.00)'),
+(5, 1, '2026-01-01', '2027-01-01', '550.00', '11801', '4.50', 'Vigente según fecha', '1.50', '3.00', '0.00', '1.50 + (CEIL((550.00 - 500.01) / 1000) * 3.00)');
+
 COMMIT;

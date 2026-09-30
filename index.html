@@ -97,18 +97,453 @@
                         </div>
                     </div>
                 </form>
+                <div class="row mt-4 mb-5">
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div
+                                class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Impuesto a las Actividades Económicas - Registro y Períodos Históricos
+                                </h5>
+                                <span id="badgeTipoCliente" class="badge bg-light text-dark">Cliente Particular</span>
+                            </div>
+                            <div class="card-body">
+                                <!-- Alerta para cliente particular -->
+                                <div id="alertaParticular" class="alert alert-info mb-0">
+                                    <strong>Nota:</strong> El cálculo y registro del monto del balance solo aplica para
+                                    clientes de tipo <strong>Empresa</strong>. En clientes particulares no se muestra ni
+                                    se calcula ningún balance.
+                                </div>
+
+                                <!-- Sección exclusiva para Empresa -->
+                                <div id="seccionPeriodosEmpresa" style="display: none;">
+                                    <!-- Formulario de ingreso de período y balance -->
+                                    <div class="card bg-light border-primary mb-4">
+                                        <div class="card-header bg-primary-subtle fw-semibold text-primary">
+                                            Nuevo Período de Balance Anual
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-md-2">
+                                                    <label for="txtPeriodoDesde"
+                                                        class="form-label fw-bold">Desde:</label>
+                                                    <input type="date" id="txtPeriodoDesde" class="form-control"
+                                                        required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label for="txtPeriodoHasta"
+                                                        class="form-label fw-bold">Hasta:</label>
+                                                    <input type="date" id="txtPeriodoHasta" class="form-control"
+                                                        required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label for="txtPeriodoBalance" class="form-label fw-bold">Monto
+                                                        Balance ($):</label>
+                                                    <input type="number" step="0.01" min="0.01" id="txtPeriodoBalance"
+                                                        placeholder="Ej: 550.00" class="form-control" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label for="txtPeriodoCodigo"
+                                                        class="form-label fw-bold">Código:</label>
+                                                    <input type="text" id="txtPeriodoCodigo" value="11801"
+                                                        class="form-control" placeholder="11801">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label for="txtPeriodoPrecio" class="form-label fw-bold">Precio
+                                                        Calculado:</label>
+                                                    <input type="text" id="txtPeriodoPrecio"
+                                                        class="form-control fw-bold text-success bg-white" readonly
+                                                        placeholder="$0.00">
+                                                </div>
+                                                <div class="col-md-2 d-grid gap-1">
+                                                    <button type="button" id="btnAgregarPeriodo"
+                                                        class="btn btn-success">
+                                                        + Agregar Período
+                                                    </button>
+                                                    <button type="button" id="btnCancelarPeriodo"
+                                                        class="btn btn-secondary btn-sm" style="display: none;">
+                                                        Cancelar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-2">
+                                                <div class="col-12">
+                                                    <small id="lblDetalleFormula" class="text-muted"></small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <h6 class="fw-bold mb-0 text-secondary">Histórico de Períodos Registrados</h6>
+                                    </div>
+                                    <p class="text-muted mb-2">
+                                        <small>* La suma visual de los precios es solamente un total administrativo
+                                            referencial de filas históricas; no representa la mensualidad
+                                            vigente.</small>
+                                    </p>
+                                    <div class="table-responsive">
+                                        <table
+                                            class="table table-bordered table-striped table-hover text-center align-middle">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Desde</th>
+                                                    <th>Hasta</th>
+                                                    <th>Balance</th>
+                                                    <th>Código</th>
+                                                    <th>Precio</th>
+                                                    <th>Estado</th>
+                                                    <th style="width: 130px;">Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tblPeriodosHistoricos">
+                                                <!-- Filas de períodos agregados -->
+                                            </tbody>
+                                            <tfoot class="table-light fw-bold">
+                                                <tr>
+                                                    <td colspan="4" class="text-end">Total Administrativo:</td>
+                                                    <td id="lblTotalAdmin">$0.00</td>
+                                                    <td colspan="2"></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 </body>
 <script>
     var accion = 'nuevo',
-        idCliente = '';
+        idCliente = '',
+        idPeriodoEnEdicion = null,
+        periodosClienteActual = [];
+
+    // Tabla tarifaria según Sección 8 del PDF
+    const TABLA_TARIFAS = [
+        { desde: 0.01, hasta: 500.00, base: 1.50, adicional: 0.00, pct: 0 },
+        { desde: 500.01, hasta: 1000.00, base: 1.50, adicional: 3.00, pct: 0 },
+        { desde: 1000.01, hasta: 2000.00, base: 3.00, adicional: 3.00, pct: 0 },
+        { desde: 2000.01, hasta: 3000.00, base: 6.00, adicional: 3.00, pct: 0 },
+        { desde: 3000.01, hasta: 6000.00, base: 9.00, adicional: 2.00, pct: 0 },
+        { desde: 8000.01, hasta: 18000.00, base: 15.00, adicional: 2.00, pct: 0 },
+        { desde: 18000.01, hasta: 30000.00, base: 39.00, adicional: 2.00, pct: 0 },
+        { desde: 30000.01, hasta: 60000.00, base: 63.00, adicional: 1.00, pct: 0 },
+        { desde: 60000.01, hasta: 100000.00, base: 93.00, adicional: 0.80, pct: 0 },
+        { desde: 100000.01, hasta: 200000.00, base: 125.00, adicional: 0.70, pct: 0 },
+        { desde: 200000.01, hasta: 300000.00, base: 195.00, adicional: 0.60, pct: 0 },
+        { desde: 300000.01, hasta: 400000.00, base: 255.00, adicional: 0.45, pct: 0 },
+        { desde: 400000.01, hasta: 500000.00, base: 300.00, adicional: 0.40, pct: 0 },
+        { desde: 500000.01, hasta: 1000000.00, base: 340.00, adicional: 0.30, pct: 0 },
+        { desde: 1000000.01, hasta: 99999999.99, base: 490.00, adicional: 0.18, pct: 0 }
+    ];
+
+    // Cálculo automático del impuesto mensual según el monto del balance y la fecha (Sección 10, 12 y RF 20 del PDF)
+    function calcularPrecioImpuesto(balance, fechaDesde) {
+        let val = parseFloat(balance);
+        if (isNaN(val) || val <= 0) return { precio: null, detalle: '' };
+
+        let anio = 2026;
+        if (fechaDesde) {
+            if (fechaDesde.includes('-')) {
+                anio = parseInt(fechaDesde.split('-')[0], 10);
+            } else if (fechaDesde.includes('/')) {
+                let partes = fechaDesde.split('/');
+                anio = parseInt(partes[partes.length - 1], 10);
+            }
+        }
+
+        // Sección 12 del PDF: Período histórico 2022 a 2023 utilizó fórmula proporcional anterior
+        if (anio <= 2022) {
+            let tarifaDesde = 500.00;
+            let precioBase = 1.50;
+            let adicional = 3.00;
+            if (val <= 500.00) {
+                return { precio: "1.50", detalle: `Fórmula Histórica 2022: Tarifa base = $1.50` };
+            }
+            let excedente = val - tarifaDesde;
+            let precio = precioBase + ((excedente / 1000) * adicional);
+            let detalle = `Fórmula Histórica Proporcional (2022): $${precioBase.toFixed(2)} + (($${val.toFixed(2)} - $${tarifaDesde.toFixed(2)}) / 1,000 x $${adicional.toFixed(2)}) = $${precio.toFixed(2)}`;
+            return { precio: precio.toFixed(2), detalle };
+        }
+
+        // Períodos nuevos (2023 en adelante): Fórmula por bloques completos con CEIL (Sección 10.1 y 18.3)
+        const tarifa = TABLA_TARIFAS.find(t => val >= t.desde && val <= t.hasta);
+        if (!tarifa) {
+            return { precio: null, detalle: 'No existe una tarifa configurada para el balance indicado (RF 11).' };
+        }
+
+        if (tarifa.pct > 0) {
+            let precio = (val * tarifa.pct / 100).toFixed(2);
+            return { precio, detalle: `Tarifa Porcentual: ${val} x ${tarifa.pct}% = $${precio}` };
+        }
+
+        let excedente = val - tarifa.desde;
+        let bloques = Math.ceil(excedente / 1000);
+        let precio = (tarifa.base + (bloques * tarifa.adicional)).toFixed(2);
+        let detalle = `Fórmula por Bloques (CEIL): Base: $${tarifa.base.toFixed(2)} + (${bloques} bloque(s) x $${tarifa.adicional.toFixed(2)}) = $${precio}`;
+        return { precio, detalle };
+    }
+
+    function formatearFecha(f) {
+        if (!f) return '';
+        if (f.includes('/')) return f;
+        let partes = f.split('-');
+        if (partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+        return f;
+    }
+
+    // Validación de superposición de intervalos [Desde, Hasta) (RF 02, RF 04 y RF 05)
+    function verificarSuperposicion(nuevaDesde, nuevaHasta, listaExistente, idIgnorar = null) {
+        const inicioNuevo = new Date(nuevaDesde + "T00:00:00").getTime();
+        const finNuevo = new Date(nuevaHasta + "T00:00:00").getTime();
+
+        for (let p of listaExistente) {
+            if (idIgnorar && p.idPeriodo == idIgnorar) continue;
+            const inicioExist = new Date(p.desde + (p.desde.includes('T') ? '' : 'T00:00:00')).getTime();
+            const finExist = new Date(p.hasta + (p.hasta.includes('T') ? '' : 'T00:00:00')).getTime();
+
+            // Dos intervalos [inicio, fin) se superponen si inicioNuevo < finExist && inicioExist < finNuevo
+            if (inicioNuevo < finExist && inicioExist < finNuevo) {
+                return {
+                    superpuesto: true,
+                    conflicto: `${formatearFecha(p.desde)} al ${formatearFecha(p.hasta)}`
+                };
+            }
+        }
+        return { superpuesto: false };
+    }
+
+    async function obtenerPeriodosBD(id) {
+        if (!id) {
+            periodosClienteActual = [];
+            renderizarPeriodos('particular');
+            return;
+        }
+        try {
+            let response = await fetch(`/periodos?idCliente=${id}`);
+            let datos = await response.json();
+            periodosClienteActual = Array.isArray(datos) ? datos : [];
+            renderizarPeriodos('empresa');
+        } catch (e) {
+            console.error('Error al obtener períodos:', e);
+            periodosClienteActual = [];
+            renderizarPeriodos('empresa');
+        }
+    }
+
+    function renderizarPeriodos(tipo) {
+        const badge = document.getElementById('badgeTipoCliente');
+        const alerta = document.getElementById('alertaParticular');
+        const seccion = document.getElementById('seccionPeriodosEmpresa');
+        const tbody = document.getElementById('tblPeriodosHistoricos');
+
+        if (tipo === 'empresa') {
+            const nombreCli = txtNombreCliente.value.trim();
+            badge.className = 'badge bg-success text-white';
+            badge.textContent = nombreCli ? `Empresa: ${nombreCli}` : 'Cliente Empresa';
+            alerta.style.display = 'none';
+            seccion.style.display = 'block';
+
+            let filas = '';
+            let suma = 0;
+
+            if (periodosClienteActual.length === 0) {
+                filas = '<tr><td colspan="7" class="text-muted py-3">Este cliente aún no tiene períodos registrados en la base de datos. Ingrese uno arriba.</td></tr>';
+            } else {
+                periodosClienteActual.forEach((p) => {
+                    let precioNum = parseFloat(p.precio) || 0;
+                    suma += precioNum;
+                    const badgeEstado = (p.estado && p.estado.includes('Vigente')) ? 'badge bg-success' : 'badge bg-secondary';
+                    filas += `
+                        <tr>
+                            <td>${formatearFecha(p.desde)}</td>
+                            <td>${formatearFecha(p.hasta)}</td>
+                            <td class="fw-bold text-primary">$${parseFloat(p.balance).toFixed(2)}</td>
+                            <td><span class="badge bg-dark">${p.codigo}</span></td>
+                            <td class="fw-bold text-success">$${precioNum.toFixed(2)}</td>
+                            <td><span class="${badgeEstado}">${p.estado}</span></td>
+                            <td>
+                                <button type="button" onclick='editarPeriodo(${JSON.stringify(p)}, event)' class="btn btn-sm btn-primary me-1">MOD</button>
+                                <button type="button" onclick='eliminarPeriodo(${JSON.stringify(p)}, event)' class="btn btn-sm btn-danger">DEL</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            tbody.innerHTML = filas;
+            document.getElementById('lblTotalAdmin').textContent = `$${suma.toFixed(2)}`;
+        } else {
+            badge.className = 'badge bg-secondary text-white';
+            badge.textContent = 'Cliente Particular';
+            alerta.style.display = 'block';
+            seccion.style.display = 'none';
+            tbody.innerHTML = '';
+        }
+    }
+
+    // Función para actualizar el cálculo inmediato en pantalla
+    function actualizarCalculo() {
+        const res = calcularPrecioImpuesto(txtPeriodoBalance.value, txtPeriodoDesde.value);
+        if (res.precio !== null) {
+            txtPeriodoPrecio.value = `$${res.precio}`;
+            lblDetalleFormula.textContent = res.detalle;
+            lblDetalleFormula.className = "text-success";
+        } else {
+            txtPeriodoPrecio.value = '';
+            lblDetalleFormula.textContent = res.detalle || 'Ingrese un balance válido mayor que cero.';
+            lblDetalleFormula.className = "text-danger";
+        }
+    }
+
+    txtPeriodoBalance.addEventListener('input', actualizarCalculo);
+    txtPeriodoDesde.addEventListener('change', actualizarCalculo);
+
+    function cancelarEdicionPeriodo() {
+        idPeriodoEnEdicion = null;
+        txtPeriodoDesde.value = '';
+        txtPeriodoHasta.value = '';
+        txtPeriodoBalance.value = '';
+        txtPeriodoPrecio.value = '';
+        txtPeriodoCodigo.value = '11801';
+        lblDetalleFormula.textContent = '';
+        btnAgregarPeriodo.textContent = '+ Agregar Período';
+        btnAgregarPeriodo.className = 'btn btn-success';
+        btnCancelarPeriodo.style.display = 'none';
+    }
+
+    btnCancelarPeriodo.addEventListener('click', cancelarEdicionPeriodo);
+
+    function editarPeriodo(p, event) {
+        event.stopPropagation();
+        idPeriodoEnEdicion = p.idPeriodo;
+
+        txtPeriodoDesde.value = p.desde;
+        txtPeriodoHasta.value = p.hasta;
+        txtPeriodoBalance.value = p.balance;
+        txtPeriodoCodigo.value = p.codigo || '11801';
+
+        actualizarCalculo();
+
+        btnAgregarPeriodo.textContent = 'Guardar Modificación';
+        btnAgregarPeriodo.className = 'btn btn-warning';
+        btnCancelarPeriodo.style.display = 'inline-block';
+        txtPeriodoDesde.focus();
+    }
+
+    async function eliminarPeriodo(p, event) {
+        event.stopPropagation();
+        if (confirm(`¿Seguro de eliminar el período del ${formatearFecha(p.desde)} al ${formatearFecha(p.hasta)} de la base de datos?`)) {
+            let datos = {
+                accion: 'eliminar',
+                idPeriodo: p.idPeriodo
+            };
+            let response = await fetch('/periodo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+            let res = await response.json();
+            if (res.msg != 'ok') {
+                alert('Error al eliminar período: ' + res.msg);
+                return;
+            }
+            if (idPeriodoEnEdicion == p.idPeriodo) {
+                cancelarEdicionPeriodo();
+            }
+            obtenerPeriodosBD(idCliente);
+        }
+    }
+
+    // Guardar o Modificar período en MySQL
+    btnAgregarPeriodo.addEventListener('click', async () => {
+        if (!idCliente) {
+            alert('Debe seleccionar una Empresa registrada de la tabla para administrar sus períodos.');
+            return;
+        }
+
+        const desde = txtPeriodoDesde.value;
+        const hasta = txtPeriodoHasta.value;
+        const balance = parseFloat(txtPeriodoBalance.value);
+        const codigo = txtPeriodoCodigo.value.trim() || '11801';
+
+        if (!desde || !hasta) {
+            alert('Por favor complete las fechas Desde y Hasta.');
+            return;
+        }
+        if (new Date(desde) >= new Date(hasta)) {
+            alert('La fecha Hasta debe ser posterior a la fecha Desde (RF 03).');
+            return;
+        }
+        if (isNaN(balance) || balance <= 0) {
+            alert('Ingrese un balance mayor que cero.');
+            return;
+        }
+
+        // Validar que no haya superposición con otros períodos de la empresa en BD
+        const check = verificarSuperposicion(desde, hasta, periodosClienteActual, idPeriodoEnEdicion);
+        if (check.superpuesto) {
+            alert(`Error (RF 04): El período indicado se superpone con un período existente (${check.conflicto}) para esta empresa.`);
+            return;
+        }
+
+        const calc = calcularPrecioImpuesto(balance, desde);
+        if (calc.precio === null) {
+            alert(calc.detalle || 'No existe una tarifa configurada para el balance indicado.');
+            return;
+        }
+
+        // Determinar estado según fecha
+        const hoy = new Date();
+        const fHasta = new Date(hasta + "T23:59:59");
+        const fDesde = new Date(desde + "T00:00:00");
+        let estado = 'Histórico';
+        if (hoy >= fDesde && hoy <= fHasta) {
+            estado = 'Vigente según fecha';
+        }
+
+        let datos = {
+            accion: idPeriodoEnEdicion ? 'modificar' : 'nuevo',
+            idCliente: parseInt(idCliente),
+            idPeriodo: idPeriodoEnEdicion,
+            desde,
+            hasta,
+            balance,
+            codigo,
+            precio: parseFloat(calc.precio),
+            estado
+        };
+
+        let response = await fetch('/periodo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        let res = await response.json();
+
+        if (res.msg != 'ok') {
+            alert('Error al guardar período: ' + res.msg);
+            return;
+        }
+
+        cancelarEdicionPeriodo();
+        obtenerPeriodosBD(idCliente);
+    });
+
+    cboTipoPersona.addEventListener('change', () => {
+        if (cboTipoPersona.value === 'empresa' && idCliente) {
+            obtenerPeriodosBD(idCliente);
+        } else {
+            renderizarPeriodos(cboTipoPersona.value);
+        }
+    });
 
     frmCliente.addEventListener('submit', (e) => {
         e.preventDefault();
         guardarClientes();
-
     });
     frmCliente.addEventListener('reset', (e) => {
         e.preventDefault();
@@ -118,7 +553,10 @@
         e.preventDefault();
         obtenerClientes(txtBuscarCliente.value);
     });
-    document.addEventListener("DOMContentLoaded", obtenerClientes);
+    document.addEventListener("DOMContentLoaded", () => {
+        obtenerClientes();
+        renderizarPeriodos(cboTipoPersona.value);
+    });
 
     async function obtenerClientes(buscar = "") {
         let response = await fetch(`/clientes?buscar=${buscar}`),
@@ -156,6 +594,13 @@
         txtTelefonoCliente.value = data.telefono;
         txtEmailCliente.value = data.email;
         cboTipoPersona.value = data.tipo;
+
+        cancelarEdicionPeriodo();
+        if (data.tipo === 'empresa') {
+            obtenerPeriodosBD(data.idCliente);
+        } else {
+            renderizarPeriodos('particular');
+        }
     }
     function eliminarCliente(data, event) {
         event.preventDefault();
@@ -199,6 +644,9 @@
         txtTelefonoCliente.value = '';
         txtEmailCliente.value = '';
         cboTipoPersona.value = 'particular';
+        periodosClienteActual = [];
+        cancelarEdicionPeriodo();
+        renderizarPeriodos('particular');
     }
 </script>
 
