@@ -1,0 +1,135 @@
+<form id="frmConsultarCliente">
+    <div class="card text-bg-dark mb-3 shadow" style="min-width: 750px;">
+        <div class="card-header bg-secondary text-white">
+            <div class="d-flex align-items-center">
+                <span class="fw-bold">::.. Búsqueda de Clientes ..::</span>
+                <div class="ms-auto">
+                    <button data-form="busqueda_clientes" type="button" class="btn-close btn-close-white" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th colspan="7">
+                                        <input type="search" placeholder="Buscar por código o nombre..."
+                                            id="txtBuscarCliente" name="txtBuscarCliente"
+                                            class="form-control">
+                                    </th>
+                                </tr>
+                                <tr class="table-primary text-dark">
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Dirección</th>
+                                    <th>Teléfono</th>
+                                    <th>Email</th>
+                                    <th>Tipo</th>
+                                    <th style="width: 80px;" class="text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblClientes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    txtBuscarCliente.addEventListener('keyup', (e) => {
+        e.preventDefault();
+        obtenerClientes(txtBuscarCliente.value);
+    });
+
+    async function obtenerClientes(buscar = "") {
+        try {
+            let response = await fetch(`/clientes?buscar=${encodeURIComponent(buscar)}`);
+            let datos = await response.json();
+            mostrarDatosClientes(Array.isArray(datos) ? datos : []);
+        } catch (e) {
+        }
+    }
+
+    function mostrarDatosClientes(datos) {
+        let filas = "";
+        if (datos.length === 0) {
+            filas = `<tr><td colspan="7" class="text-center text-muted py-3">No se encontraron clientes registrados</td></tr>`;
+        } else {
+            datos.forEach(e => {
+                const badgeTipo = e.tipo === 'empresa' ? 'badge bg-primary' : 'badge bg-secondary';
+                filas += `
+                    <tr style="cursor: pointer;" onclick='seleccionarCliente(${JSON.stringify(e)}, event)'>
+                        <td class="fw-bold">${e.codigo}</td>
+                        <td>${e.nombre}</td>
+                        <td>${e.direccion}</td>
+                        <td>${e.telefono}</td>
+                        <td>${e.email}</td>
+                        <td><span class="${badgeTipo}">${e.tipo}</span></td>
+                        <td class="text-center">
+                            <button type="button" onclick='eliminarClienteDesdeBusqueda(${JSON.stringify(e)}, event)' 
+                                class="btn btn-sm btn-danger">DEL</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        tblClientes.innerHTML = filas;
+    }
+
+    function seleccionarCliente(data, event) {
+        if (event) event.preventDefault();
+        cargarForm('clientes', () => {
+            if (typeof modificarCliente === 'function') {
+                modificarCliente(data, event);
+            }
+        });
+    }
+
+    async function eliminarClienteDesdeBusqueda(data, event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        if (confirm(`¿Seguro de eliminar al cliente: ${data.nombre}?`)) {
+            try {
+                let datos = {
+                    modulo: "cliente",
+                    accion: "eliminar",
+                    idCliente: data.idCliente
+                };
+                let response = await fetch('/clientes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+                let respuesta = await response.json();
+                if (respuesta.msg != "ok") {
+                    if (typeof alertify !== 'undefined') {
+                        alertify.error("Error al eliminar: " + respuesta.msg);
+                    } else {
+                        alert("Error: " + respuesta.msg);
+                    }
+                    return;
+                }
+                if (typeof alertify !== 'undefined') {
+                    alertify.success("Cliente eliminado exitosamente");
+                } else {
+                    alert("Cliente eliminado exitosamente");
+                }
+                obtenerClientes(txtBuscarCliente.value);
+                if (typeof limpiarFormulario === 'function' && window.idCliente == data.idCliente) {
+                    limpiarFormulario();
+                }
+            } catch (err) {
+                alert("Error de conexión al eliminar el cliente.");
+            }
+        }
+    }
+
+    obtenerClientes();
+</script>

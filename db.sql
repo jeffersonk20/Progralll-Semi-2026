@@ -93,4 +93,26 @@ INSERT INTO `periodos_actividades_economicas` (`idPeriodo`, `idCliente`, `desde`
 (4, 1, '2025-01-01', '2026-01-01', '550.00', '11801', '4.50', 'Histórico', '1.50', '3.00', '0.00', '1.50 + (CEIL((550.00 - 500.01) / 1000) * 3.00)'),
 (5, 1, '2026-01-01', '2027-01-01', '550.00', '11801', '4.50', 'Vigente según fecha', '1.50', '3.00', '0.00', '1.50 + (CEIL((550.00 - 500.01) / 1000) * 3.00)');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `productos`
+--
+
+CREATE TABLE IF NOT EXISTS `productos` (
+  `idProducto` int(10) NOT NULL AUTO_INCREMENT,
+  `codigo` char(10) NOT NULL,
+  `descripcion` char(150) NOT NULL,
+  `estado` char(20) NOT NULL DEFAULT 'Activo',
+  PRIMARY KEY (`idProducto`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `productos`
+--
+
+INSERT INTO `productos` (`idProducto`, `codigo`, `descripcion`, `estado`) VALUES
+(1, 'P001', 'Computadora Portatil Dell', 'Activo'),
+(2, 'P002', 'Monitor Samsung 24 pulg', 'Activo');
+
 COMMIT;

@@ -1,0 +1,571 @@
+<form id="frmCliente">
+    <div class="card text-bg-dark mb-3 shadow" style="min-width: 650px; max-width: 780px;">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex align-items-center">
+                <span class="fw-bold">::.. Administración de Clientes y Actividades Económicas ..::</span>
+                <div class="ms-auto">
+                    <button data-form="clientes" type="button" class="btn-close btn-close-white"
+                        aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body" style="max-height: 80vh; overflow-y: auto;">
+            <!-- Datos del Cliente -->
+            <div class="row p-1">
+                <div class="col-12 col-md-4">
+                    <label class="form-label text-light">Código:</label>
+                    <input pattern="^[0-9]{3,10}$" required placeholder="Ej: 001" name="txtCodigoCliente"
+                        id="txtCodigoCliente" class="form-control" type="text">
+                </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label text-light">Nombre Completo / Razón Social:</label>
+                    <input pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ0-9. ]{3,}$" required placeholder="Nombre del cliente" name="txtNombreCliente"
+                        id="txtNombreCliente" class="form-control" type="text">
+                </div>
+            </div>
+            <div class="row p-1">
+                <div class="col-12">
+                    <label class="form-label text-light">Dirección:</label>
+                    <input placeholder="Dirección del domicilio o negocio" name="txtDireccionCliente" id="txtDireccionCliente"
+                        class="form-control" type="text">
+                </div>
+            </div>
+            <div class="row p-1">
+                <div class="col-12 col-md-4">
+                    <label class="form-label text-light">Teléfono:</label>
+                    <input pattern="^[0-9]{4}-[0-9]{4}$" placeholder="Ej: 7777-8888" name="txtTelefonoCliente"
+                        id="txtTelefonoCliente" class="form-control" type="text">
+                </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label text-light">Email:</label>
+                    <input placeholder="cliente@correo.com" name="txtEmailCliente" id="txtEmailCliente" class="form-control"
+                        type="email">
+                </div>
+            </div>
+            <div class="row p-1 mb-2">
+                <div class="col-12 col-md-6">
+                    <label class="form-label text-light">Tipo de Cliente:</label>
+                    <select class="form-select" name="cboTipoPersona" id="cboTipoPersona">
+                        <option value="particular">Particular</option>
+                        <option value="empresa">Empresa</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Botones de acción del Cliente -->
+            <div class="text-center bg-secondary-subtle p-2 rounded mb-3">
+                <input type="submit" value="Guardar Cliente" class="btn btn-primary me-1" id="btnGuardarCliente">
+                <input type="button" value="Buscar" class="btn btn-secondary me-1" id="btnBuscarCliente">
+                <input type="reset" value="Limpiar" class="btn btn-warning" id="btnLimpiarCliente">
+            </div>
+
+            <!-- Sección de Impuestos a las Actividades Económicas y Períodos Históricos -->
+            <div class="card shadow-sm border-secondary text-dark bg-light">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Impuesto a Actividades Económicas (Períodos)</span>
+                    <span id="badgeTipoCliente" class="badge bg-secondary">Cliente Particular</span>
+                </div>
+                <div class="card-body">
+                    <!-- Alerta para cliente particular -->
+                    <div id="alertaParticular" class="alert alert-info mb-0">
+                        <strong>Nota:</strong> El cálculo y registro del balance anual aplica únicamente para clientes de tipo <strong>Empresa</strong>.
+                    </div>
+
+                    <!-- Sección exclusiva para Empresa -->
+                    <div id="seccionPeriodosEmpresa" style="display: none;">
+                        <div class="card border-primary mb-3">
+                            <div class="card-header bg-primary-subtle fw-semibold text-primary">
+                                Nuevo / Editar Período de Balance Anual
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-3">
+                                        <label for="txtPeriodoDesde" class="form-label fw-bold small">Desde:</label>
+                                        <input type="date" id="txtPeriodoDesde" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="txtPeriodoHasta" class="form-label fw-bold small">Hasta:</label>
+                                        <input type="date" id="txtPeriodoHasta" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="txtPeriodoBalance" class="form-label fw-bold small">Balance ($):</label>
+                                        <input type="number" step="0.01" min="0.01" id="txtPeriodoBalance"
+                                            placeholder="Ej: 550.00" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="txtPeriodoCodigo" class="form-label fw-bold small">Código:</label>
+                                        <input type="text" id="txtPeriodoCodigo" value="11801" class="form-control form-control-sm">
+                                    </div>
+                                </div>
+                                <div class="row g-2 mt-2 align-items-center">
+                                    <div class="col-md-6">
+                                        <label for="txtPeriodoPrecio" class="form-label fw-bold small">Precio Calculado:</label>
+                                        <input type="text" id="txtPeriodoPrecio" class="form-control form-control-sm fw-bold text-success bg-white" readonly placeholder="$0.00">
+                                    </div>
+                                    <div class="col-md-6 d-flex gap-2">
+                                        <button type="button" id="btnAgregarPeriodo" class="btn btn-success btn-sm w-100">
+                                            + Agregar Período
+                                        </button>
+                                        <button type="button" id="btnCancelarPeriodo" class="btn btn-secondary btn-sm" style="display: none;">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12">
+                                        <small id="lblDetalleFormula" class="text-muted"></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold small text-secondary">Histórico de Períodos Registrados</span>
+                            <small class="text-muted">* Totales referenciales de auditoría</small>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-striped text-center align-middle">
+                                <thead class="table-dark small">
+                                    <tr>
+                                        <th>Desde</th>
+                                        <th>Hasta</th>
+                                        <th>Balance</th>
+                                        <th>Código</th>
+                                        <th>Precio</th>
+                                        <th>Estado</th>
+                                        <th style="width: 105px;">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tblPeriodosHistoricos">
+                                    <!-- Filas dinámicas -->
+                                </tbody>
+                                <tfoot class="table-light fw-bold small">
+                                    <tr>
+                                        <td colspan="4" class="text-end">Total Administrativo:</td>
+                                        <td id="lblTotalAdmin">$0.00</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    var accion = 'nuevo',
+        idCliente = '',
+        idPeriodoEnEdicion = null,
+        periodosClienteActual = [];
+
+    // Tabla tarifaria según normativa municipal
+    const TABLA_TARIFAS = [
+        { desde: 0.01, hasta: 500.00, base: 1.50, adicional: 0.00, pct: 0 },
+        { desde: 500.01, hasta: 1000.00, base: 1.50, adicional: 3.00, pct: 0 },
+        { desde: 1000.01, hasta: 2000.00, base: 3.00, adicional: 3.00, pct: 0 },
+        { desde: 2000.01, hasta: 3000.00, base: 6.00, adicional: 3.00, pct: 0 },
+        { desde: 3000.01, hasta: 6000.00, base: 9.00, adicional: 2.00, pct: 0 },
+        { desde: 8000.01, hasta: 18000.00, base: 15.00, adicional: 2.00, pct: 0 },
+        { desde: 18000.01, hasta: 30000.00, base: 39.00, adicional: 2.00, pct: 0 },
+        { desde: 30000.01, hasta: 60000.00, base: 63.00, adicional: 1.00, pct: 0 },
+        { desde: 60000.01, hasta: 100000.00, base: 93.00, adicional: 0.80, pct: 0 },
+        { desde: 100000.01, hasta: 200000.00, base: 125.00, adicional: 0.70, pct: 0 },
+        { desde: 200000.01, hasta: 300000.00, base: 195.00, adicional: 0.60, pct: 0 },
+        { desde: 300000.01, hasta: 400000.00, base: 255.00, adicional: 0.45, pct: 0 },
+        { desde: 400000.01, hasta: 500000.00, base: 300.00, adicional: 0.40, pct: 0 },
+        { desde: 500000.01, hasta: 1000000.00, base: 340.00, adicional: 0.30, pct: 0 },
+        { desde: 1000000.01, hasta: 99999999.99, base: 490.00, adicional: 0.18, pct: 0 }
+    ];
+
+    function calcularPrecioImpuesto(balance, fechaDesde) {
+        let val = parseFloat(balance);
+        if (isNaN(val) || val <= 0) return { precio: null, detalle: '' };
+
+        let anio = 2026;
+        if (fechaDesde) {
+            if (fechaDesde.includes('-')) {
+                anio = parseInt(fechaDesde.split('-')[0], 10);
+            } else if (fechaDesde.includes('/')) {
+                let partes = fechaDesde.split('/');
+                anio = parseInt(partes[partes.length - 1], 10);
+            }
+        }
+
+        if (anio <= 2022) {
+            let tarifaDesde = 500.00;
+            let precioBase = 1.50;
+            let adicional = 3.00;
+            if (val <= 500.00) {
+                return { precio: "1.50", detalle: `Fórmula Histórica 2022: Tarifa base = $1.50` };
+            }
+            let excedente = val - tarifaDesde;
+            let precio = precioBase + ((excedente / 1000) * adicional);
+            let detalle = `Fórmula Histórica Proporcional (2022): $${precioBase.toFixed(2)} + (($${val.toFixed(2)} - $${tarifaDesde.toFixed(2)}) / 1,000 x $${adicional.toFixed(2)}) = $${precio.toFixed(2)}`;
+            return { precio: precio.toFixed(2), detalle };
+        }
+
+        const tarifa = TABLA_TARIFAS.find(t => val >= t.desde && val <= t.hasta);
+        if (!tarifa) {
+            return { precio: null, detalle: 'No existe una tarifa configurada para el balance indicado.' };
+        }
+
+        if (tarifa.pct > 0) {
+            let precio = (val * tarifa.pct / 100).toFixed(2);
+            return { precio, detalle: `Tarifa Porcentual: ${val} x ${tarifa.pct}% = $${precio}` };
+        }
+
+        let excedente = val - tarifa.desde;
+        let bloques = Math.ceil(excedente / 1000);
+        let precio = (tarifa.base + (bloques * tarifa.adicional)).toFixed(2);
+        let detalle = `Fórmula por Bloques (CEIL): Base: $${tarifa.base.toFixed(2)} + (${bloques} bloque(s) x $${tarifa.adicional.toFixed(2)}) = $${precio}`;
+        return { precio, detalle };
+    }
+
+    function formatearFecha(f) {
+        if (!f) return '';
+        if (f.includes('/')) return f;
+        let partes = f.split('-');
+        if (partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+        return f;
+    }
+
+    function verificarSuperposicion(nuevaDesde, nuevaHasta, listaExistente, idIgnorar = null) {
+        const inicioNuevo = new Date(nuevaDesde + "T00:00:00").getTime();
+        const finNuevo = new Date(nuevaHasta + "T00:00:00").getTime();
+
+        for (let p of listaExistente) {
+            if (idIgnorar && p.idPeriodo == idIgnorar) continue;
+            const inicioExist = new Date(p.desde + (p.desde.includes('T') ? '' : 'T00:00:00')).getTime();
+            const finExist = new Date(p.hasta + (p.hasta.includes('T') ? '' : 'T00:00:00')).getTime();
+
+            if (inicioNuevo < finExist && inicioExist < finNuevo) {
+                return {
+                    superpuesto: true,
+                    conflicto: `${formatearFecha(p.desde)} al ${formatearFecha(p.hasta)}`
+                };
+            }
+        }
+        return { superpuesto: false };
+    }
+
+    async function obtenerPeriodosBD(id) {
+        if (!id) {
+            periodosClienteActual = [];
+            renderizarPeriodos('particular');
+            return;
+        }
+        try {
+            let response = await fetch(`/periodos?idCliente=${id}`);
+            let datos = await response.json();
+            periodosClienteActual = Array.isArray(datos) ? datos : [];
+            renderizarPeriodos('empresa');
+        } catch (e) {
+            periodosClienteActual = [];
+            renderizarPeriodos('empresa');
+        }
+    }
+
+    function renderizarPeriodos(tipo) {
+        const badge = document.getElementById('badgeTipoCliente');
+        const alerta = document.getElementById('alertaParticular');
+        const seccion = document.getElementById('seccionPeriodosEmpresa');
+        const tbody = document.getElementById('tblPeriodosHistoricos');
+
+        if (!badge || !alerta || !seccion || !tbody) return;
+
+        if (tipo === 'empresa') {
+            const nombreCli = txtNombreCliente.value.trim();
+            badge.className = 'badge bg-success text-white';
+            badge.textContent = nombreCli ? `Empresa: ${nombreCli}` : 'Cliente Empresa';
+            alerta.style.display = 'none';
+            seccion.style.display = 'block';
+
+            let filas = '';
+            let suma = 0;
+
+            if (periodosClienteActual.length === 0) {
+                filas = '<tr><td colspan="7" class="text-muted py-2">Este cliente no tiene períodos registrados en la base de datos.</td></tr>';
+            } else {
+                periodosClienteActual.forEach((p) => {
+                    let precioNum = parseFloat(p.precio) || 0;
+                    suma += precioNum;
+                    const badgeEstado = (p.estado && p.estado.includes('Vigente')) ? 'badge bg-success' : 'badge bg-secondary';
+                    filas += `
+                        <tr>
+                            <td>${formatearFecha(p.desde)}</td>
+                            <td>${formatearFecha(p.hasta)}</td>
+                            <td class="fw-bold text-primary">$${parseFloat(p.balance).toFixed(2)}</td>
+                            <td><span class="badge bg-dark">${p.codigo}</span></td>
+                            <td class="fw-bold text-success">$${precioNum.toFixed(2)}</td>
+                            <td><span class="${badgeEstado}">${p.estado}</span></td>
+                            <td>
+                                <button type="button" onclick='editarPeriodo(${JSON.stringify(p)}, event)' class="btn btn-sm btn-primary me-1 py-0 px-1">MOD</button>
+                                <button type="button" onclick='eliminarPeriodo(${JSON.stringify(p)}, event)' class="btn btn-sm btn-danger py-0 px-1">DEL</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            tbody.innerHTML = filas;
+            const lblTotal = document.getElementById('lblTotalAdmin');
+            if (lblTotal) lblTotal.textContent = `$${suma.toFixed(2)}`;
+        } else {
+            badge.className = 'badge bg-secondary text-white';
+            badge.textContent = 'Cliente Particular';
+            alerta.style.display = 'block';
+            seccion.style.display = 'none';
+            tbody.innerHTML = '';
+        }
+    }
+
+    function actualizarCalculo() {
+        const res = calcularPrecioImpuesto(txtPeriodoBalance.value, txtPeriodoDesde.value);
+        if (res.precio !== null) {
+            txtPeriodoPrecio.value = `$${res.precio}`;
+            lblDetalleFormula.textContent = res.detalle;
+            lblDetalleFormula.className = "text-success";
+        } else {
+            txtPeriodoPrecio.value = '';
+            lblDetalleFormula.textContent = res.detalle || 'Ingrese un balance válido mayor que cero.';
+            lblDetalleFormula.className = "text-danger";
+        }
+    }
+
+    txtPeriodoBalance.addEventListener('input', actualizarCalculo);
+    txtPeriodoDesde.addEventListener('change', actualizarCalculo);
+
+    function cancelarEdicionPeriodo() {
+        idPeriodoEnEdicion = null;
+        txtPeriodoDesde.value = '';
+        txtPeriodoHasta.value = '';
+        txtPeriodoBalance.value = '';
+        txtPeriodoPrecio.value = '';
+        txtPeriodoCodigo.value = '11801';
+        lblDetalleFormula.textContent = '';
+        btnAgregarPeriodo.textContent = '+ Agregar Período';
+        btnAgregarPeriodo.className = 'btn btn-success btn-sm w-100';
+        btnCancelarPeriodo.style.display = 'none';
+    }
+
+    btnCancelarPeriodo.addEventListener('click', cancelarEdicionPeriodo);
+
+    function editarPeriodo(p, event) {
+        if (event) event.stopPropagation();
+        idPeriodoEnEdicion = p.idPeriodo;
+
+        txtPeriodoDesde.value = p.desde;
+        txtPeriodoHasta.value = p.hasta;
+        txtPeriodoBalance.value = p.balance;
+        txtPeriodoCodigo.value = p.codigo || '11801';
+
+        actualizarCalculo();
+
+        btnAgregarPeriodo.textContent = 'Guardar Modificación';
+        btnAgregarPeriodo.className = 'btn btn-warning btn-sm w-100';
+        btnCancelarPeriodo.style.display = 'inline-block';
+        txtPeriodoDesde.focus();
+    }
+
+    async function eliminarPeriodo(p, event) {
+        if (event) event.stopPropagation();
+        if (confirm(`¿Seguro de eliminar el período del ${formatearFecha(p.desde)} al ${formatearFecha(p.hasta)}?`)) {
+            let datos = {
+                modulo: 'periodo',
+                accion: 'eliminar',
+                idPeriodo: p.idPeriodo
+            };
+            let response = await fetch('/periodo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+            let res = await response.json();
+            if (res.msg != 'ok') {
+                if (typeof alertify !== 'undefined') alertify.error('Error al eliminar período: ' + res.msg);
+                else alert('Error: ' + res.msg);
+                return;
+            }
+            if (typeof alertify !== 'undefined') alertify.success('Período eliminado con éxito');
+            if (idPeriodoEnEdicion == p.idPeriodo) {
+                cancelarEdicionPeriodo();
+            }
+            obtenerPeriodosBD(idCliente);
+        }
+    }
+
+    btnAgregarPeriodo.addEventListener('click', async () => {
+        if (!idCliente) {
+            alert('Debe guardar o seleccionar una Empresa de la búsqueda para registrar sus períodos.');
+            return;
+        }
+
+        const desde = txtPeriodoDesde.value;
+        const hasta = txtPeriodoHasta.value;
+        const balance = parseFloat(txtPeriodoBalance.value);
+        const codigo = txtPeriodoCodigo.value.trim() || '11801';
+
+        if (!desde || !hasta) {
+            alert('Por favor complete las fechas Desde y Hasta.');
+            return;
+        }
+        if (new Date(desde) >= new Date(hasta)) {
+            alert('La fecha Hasta debe ser posterior a la fecha Desde.');
+            return;
+        }
+        if (isNaN(balance) || balance <= 0) {
+            alert('Ingrese un balance mayor que cero.');
+            return;
+        }
+
+        const check = verificarSuperposicion(desde, hasta, periodosClienteActual, idPeriodoEnEdicion);
+        if (check.superpuesto) {
+            alert(`Error: El período indicado se superpone con uno existente (${check.conflicto}).`);
+            return;
+        }
+
+        const calc = calcularPrecioImpuesto(balance, desde);
+        if (calc.precio === null) {
+            alert(calc.detalle || 'No existe tarifa configurada para este balance.');
+            return;
+        }
+
+        const hoy = new Date();
+        const fHasta = new Date(hasta + "T23:59:59");
+        const fDesde = new Date(desde + "T00:00:00");
+        let estado = 'Histórico';
+        if (hoy >= fDesde && hoy <= fHasta) {
+            estado = 'Vigente según fecha';
+        }
+
+        let datos = {
+            modulo: 'periodo',
+            accion: idPeriodoEnEdicion ? 'modificar' : 'nuevo',
+            idCliente: parseInt(idCliente),
+            idPeriodo: idPeriodoEnEdicion,
+            desde,
+            hasta,
+            balance,
+            codigo,
+            precio: parseFloat(calc.precio),
+            estado
+        };
+
+        let response = await fetch('/periodo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        let res = await response.json();
+
+        if (res.msg != 'ok') {
+            if (typeof alertify !== 'undefined') alertify.error('Error al guardar período: ' + res.msg);
+            else alert('Error: ' + res.msg);
+            return;
+        }
+
+        if (typeof alertify !== 'undefined') alertify.success('Período guardado con éxito');
+        cancelarEdicionPeriodo();
+        obtenerPeriodosBD(idCliente);
+    });
+
+    cboTipoPersona.addEventListener('change', () => {
+        if (cboTipoPersona.value === 'empresa' && idCliente) {
+            obtenerPeriodosBD(idCliente);
+        } else {
+            renderizarPeriodos(cboTipoPersona.value);
+        }
+    });
+
+    frmCliente.addEventListener('submit', (e) => {
+        e.preventDefault();
+        guardarClientes();
+    });
+
+    frmCliente.addEventListener('reset', (e) => {
+        e.preventDefault();
+        limpiarFormulario();
+    });
+
+    function modificarCliente(data, event) {
+        if (event) event.preventDefault();
+        idCliente = data.idCliente;
+        accion = "modificar";
+
+        txtCodigoCliente.value = data.codigo;
+        txtNombreCliente.value = data.nombre;
+        txtDireccionCliente.value = data.direccion;
+        txtTelefonoCliente.value = data.telefono;
+        txtEmailCliente.value = data.email;
+        cboTipoPersona.value = data.tipo;
+
+        cancelarEdicionPeriodo();
+        if (data.tipo === 'empresa') {
+            obtenerPeriodosBD(data.idCliente);
+        } else {
+            renderizarPeriodos('particular');
+        }
+    }
+
+    async function guardarClientes() {
+        let datos = {
+            modulo: "cliente",
+            codigo: txtCodigoCliente.value,
+            nombre: txtNombreCliente.value,
+            direccion: txtDireccionCliente.value,
+            telefono: txtTelefonoCliente.value,
+            email: txtEmailCliente.value,
+            tipo: cboTipoPersona.value,
+            accion,
+            idCliente
+        };
+        try {
+            let response = await fetch('/clientes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(datos)
+            });
+            let respuesta = await response.json();
+            if (respuesta.msg != "ok") {
+                if (typeof alertify !== 'undefined') alertify.error("Error: " + respuesta.msg);
+                else alert("Error: " + respuesta.msg);
+                return;
+            }
+            if (typeof alertify !== 'undefined') alertify.success("Cliente guardado exitosamente");
+            if (typeof obtenerClientes === 'function') {
+                obtenerClientes();
+            }
+            limpiarFormulario();
+        } catch (err) {
+            alert("Error de conexión al guardar cliente.");
+        }
+    }
+
+    function limpiarFormulario() {
+        accion = 'nuevo';
+        idCliente = '';
+        txtCodigoCliente.value = '';
+        txtNombreCliente.value = '';
+        txtDireccionCliente.value = '';
+        txtTelefonoCliente.value = '';
+        txtEmailCliente.value = '';
+        cboTipoPersona.value = 'particular';
+        periodosClienteActual = [];
+        cancelarEdicionPeriodo();
+        renderizarPeriodos('particular');
+    }
+
+    btnBuscarCliente.addEventListener('click', (e) => {
+        e.preventDefault();
+        cargarForm('busqueda_clientes');
+    });
+
+    // Inicializar visualización del estado inicial
+    renderizarPeriodos(cboTipoPersona.value);
+</script>
