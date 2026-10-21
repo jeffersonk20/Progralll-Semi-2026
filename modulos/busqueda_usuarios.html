@@ -1,0 +1,147 @@
+<div class="card shadow-lg" style="width: 780px; max-width: 95vw;">
+    <div class="card-header bg-secondary text-white d-flex align-items-center justify-content-between">
+        <span class="fw-bold">::.. Búsqueda y Gestión de Usuarios ..::</span>
+        <button type="button" class="btn-close btn-close-white" data-form="busqueda_usuarios" aria-label="Close"></button>
+    </div>
+    <div class="card-body p-3">
+        <div class="input-group mb-3">
+            <span class="input-group-text bg-dark text-info border-secondary">&#128269;</span>
+            <input type="search" id="txtBuscarUsuario" class="form-control bg-dark text-white border-secondary" placeholder="Buscar por nombre o usuario...">
+        </div>
+
+        <div class="table-responsive" style="max-height: 380px;">
+            <table class="table table-dark table-striped table-hover align-middle mb-0">
+                <thead class="table-primary text-dark sticky-top">
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>Usuario</th>
+                        <th>Nombre</th>
+                        <th>Dirección</th>
+                        <th>Teléfono</th>
+                        <th class="text-center" style="width: 140px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tblUsuariosCuerpo">
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-3">Cargando usuarios...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-dark d-flex justify-content-between align-items-center py-2 border-top border-secondary">
+        <small class="text-muted" id="lblTotalUsuarios">Total: 0 usuario(s)</small>
+        <button type="button" class="btn btn-outline-light btn-sm" onclick="recargarListaUsuarios()">
+            &#x21bb; Actualizar
+        </button>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const txtBuscar = document.getElementById('txtBuscarUsuario');
+        const tblCuerpo = document.getElementById('tblUsuariosCuerpo');
+        const lblTotal = document.getElementById('lblTotalUsuarios');
+
+        txtBuscar.addEventListener('input', () => {
+            buscarUsuarios(txtBuscar.value.trim());
+        });
+
+        async function buscarUsuarios(criterio = "") {
+            try {
+                const response = await fetch(`/usuarios?buscar=${encodeURIComponent(criterio)}`);
+                const lista = await response.json();
+                renderizarUsuarios(Array.isArray(lista) ? lista : []);
+            } catch (err) {
+                tblCuerpo.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Error al obtener usuarios del backend.</td></tr>`;
+            }
+        }
+
+        function renderizarUsuarios(usuarios) {
+            lblTotal.textContent = `Total: ${usuarios.length} usuario(s)`;
+            if (usuarios.length === 0) {
+                tblCuerpo.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No se encontraron usuarios registrados.</td></tr>`;
+                return;
+            }
+
+            let html = "";
+            usuarios.forEach(u => {
+                // Se escapan cadenas JSON para pasar seguro en la función
+                const uJson = JSON.stringify(u).replace(/"/g, '&quot;');
+                html += `
+                    <tr>
+                        <td class="text-muted fw-bold">${u.idUsuario}</td>
+                        <td class="text-info fw-semibold">@${u.usuario}</td>
+                        <td>${u.nombre}</td>
+                        <td class="small text-light">${u.direccion}</td>
+                        <td><span class="badge bg-secondary">${u.telefono}</span></td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-warning" onclick='seleccionarParaEditar(${uJson})' title="Editar">
+                                    &#9998;
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick='eliminarUsuario(${uJson})' title="Eliminar">
+                                    &#128465;
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tblCuerpo.innerHTML = html;
+        }
+
+        window.seleccionarParaEditar = function (usuario) {
+            cargarForm('usuarios', () => {
+                if (typeof window.cargarDatosUsuarioParaModificar === 'function') {
+                    window.cargarDatosUsuarioParaModificar(usuario);
+                }
+            });
+        };
+
+        window.eliminarUsuario = async function (usuario) {
+            if (confirm(`¿Está seguro que desea eliminar al usuario @${usuario.usuario} (${usuario.nombre})?`)) {
+                try {
+                    const response = await fetch('/usuarios', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            modulo: 'usuarios',
+                            accion: 'eliminar',
+                            idUsuario: usuario.idUsuario
+                        })
+                    });
+                    const res = await response.json();
+
+                    if (res.status === 'ok' || res.msg === 'ok') {
+                        if (typeof alertify !== 'undefined') {
+                            alertify.success(`Usuario @${usuario.usuario} eliminado exitosamente.`);
+                        }
+                        buscarUsuarios(txtBuscar.value.trim());
+
+                        // Si el usuario eliminado estaba en el formulario, limpiarlo
+                        const inputId = document.getElementById('txtIdUsuario');
+                        if (inputId && inputId.value == usuario.idUsuario && typeof window.limpiarFormularioUsuarioExterno === 'function') {
+                            window.limpiarFormularioUsuarioExterno();
+                        }
+                    } else {
+                        if (typeof alertify !== 'undefined') {
+                            alertify.error('Error al eliminar: ' + res.msg);
+                        }
+                    }
+                } catch (e) {
+                    if (typeof alertify !== 'undefined') {
+                        alertify.error('Error al comunicarse con el backend.');
+                    }
+                }
+            }
+        };
+
+        window.recargarListaUsuarios = function () {
+            buscarUsuarios(txtBuscar.value.trim());
+        };
+
+        // Cargar usuarios al abrir
+        buscarUsuarios();
+    })();
+</script>

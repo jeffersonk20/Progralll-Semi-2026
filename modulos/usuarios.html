@@ -1,0 +1,188 @@
+<div class="card shadow-lg" style="width: 550px; max-width: 95vw;">
+    <div class="card-header bg-secondary text-white d-flex align-items-center justify-content-between">
+        <span class="fw-bold">::.. Formulario Usuarios ..::</span>
+        <button type="button" class="btn-close btn-close-white" data-form="usuarios" aria-label="Close"></button>
+    </div>
+    <div class="card-body p-4">
+        <form id="frmUsuario" autocomplete="off">
+            <input type="hidden" id="txtIdUsuario" value="">
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="txtUsuario" class="form-label text-light small fw-bold">Usuario <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="txtUsuario" placeholder="Ej: usuario1" maxlength="35" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="txtClave" class="form-label text-light small fw-bold" id="lblClave">Contraseña <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" id="txtClave" placeholder="••••••••" maxlength="35" required>
+                    <small class="text-muted d-none" id="txtAyudaClave" style="font-size: 0.75rem;">Dejar en blanco para mantener la contraseña actual.</small>
+                </div>
+
+                <div class="col-12">
+                    <label for="txtNombre" class="form-label text-light small fw-bold">Nombre Completo <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="txtNombre" placeholder="Ej: Juan Carlos Pérez" maxlength="85" required>
+                </div>
+
+                <div class="col-md-8">
+                    <label for="txtDireccion" class="form-label text-light small fw-bold">Dirección <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="txtDireccion" placeholder="Ej: Colonia Las Flores #12" maxlength="100" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="txtTelefono" class="form-label text-light small fw-bold">Teléfono <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="txtTelefono" placeholder="0000-0000" maxlength="9" required>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-2 border-top border-secondary">
+                <button type="button" class="btn btn-outline-info btn-sm" id="btnAbrirBusqueda">
+                    &#128269; Buscar Usuarios
+                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnNuevoUsuario">
+                        Nuevo / Limpiar
+                    </button>
+                    <button type="submit" class="btn btn-success btn-sm px-3" id="btnGuardarUsuario">
+                        Guardar Usuario
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        let accionUsuario = "nuevo";
+
+        const frmUsuario = document.getElementById('frmUsuario');
+        const txtIdUsuario = document.getElementById('txtIdUsuario');
+        const txtUsuario = document.getElementById('txtUsuario');
+        const txtClave = document.getElementById('txtClave');
+        const txtNombre = document.getElementById('txtNombre');
+        const txtDireccion = document.getElementById('txtDireccion');
+        const txtTelefono = document.getElementById('txtTelefono');
+        const btnGuardarUsuario = document.getElementById('btnGuardarUsuario');
+        const btnNuevoUsuario = document.getElementById('btnNuevoUsuario');
+        const btnAbrirBusqueda = document.getElementById('btnAbrirBusqueda');
+        const txtAyudaClave = document.getElementById('txtAyudaClave');
+
+        // Formateador automático de teléfono (0000-0000)
+        txtTelefono.addEventListener('input', (e) => {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val.length > 4) {
+                val = val.substring(0, 4) + '-' + val.substring(4, 8);
+            }
+            e.target.value = val;
+        });
+
+        // Enviar datos del formulario al backend Python
+        frmUsuario.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const usuarioVal = txtUsuario.value.trim();
+            const claveVal = txtClave.value.trim();
+            const nombreVal = txtNombre.value.trim();
+            const direccionVal = txtDireccion.value.trim();
+            const telefonoVal = txtTelefono.value.trim();
+
+            if (!usuarioVal || !nombreVal || !direccionVal || !telefonoVal) {
+                if (typeof alertify !== 'undefined') alertify.warning('Por favor complete los campos obligatorios.');
+                return;
+            }
+
+            if (accionUsuario === 'nuevo' && !claveVal) {
+                if (typeof alertify !== 'undefined') alertify.warning('Debe asignar una contraseña al nuevo usuario.');
+                return;
+            }
+
+            const datos = {
+                modulo: 'usuarios',
+                accion: accionUsuario,
+                idUsuario: txtIdUsuario.value,
+                usuario: usuarioVal,
+                clave: claveVal,
+                nombre: nombreVal,
+                direccion: direccionVal,
+                telefono: telefonoVal
+            };
+
+            btnGuardarUsuario.disabled = true;
+
+            try {
+                const response = await fetch('/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+                const res = await response.json();
+
+                if (res.status === 'ok' || res.msg === 'ok') {
+                    if (typeof alertify !== 'undefined') {
+                        alertify.success(accionUsuario === 'nuevo' ? 'Usuario registrado con éxito.' : 'Usuario modificado con éxito.');
+                    }
+                    limpiarFormularioUsuario();
+
+                    // Si la ventana de búsqueda está abierta, refrescar la lista
+                    if (typeof window.recargarListaUsuarios === 'function') {
+                        window.recargarListaUsuarios();
+                    }
+                } else {
+                    if (typeof alertify !== 'undefined') {
+                        alertify.error('Error al guardar: ' + res.msg);
+                    }
+                }
+            } catch (err) {
+                if (typeof alertify !== 'undefined') {
+                    alertify.error('Error de comunicación con el backend.');
+                }
+            } finally {
+                btnGuardarUsuario.disabled = false;
+            }
+        });
+
+        // Limpiar / Nuevo
+        btnNuevoUsuario.addEventListener('click', () => {
+            limpiarFormularioUsuario();
+        });
+
+        // Botón de búsqueda rápida
+        btnAbrirBusqueda.addEventListener('click', () => {
+            cargarForm('busqueda_usuarios');
+        });
+
+        function limpiarFormularioUsuario() {
+            accionUsuario = 'nuevo';
+            txtIdUsuario.value = '';
+            txtUsuario.value = '';
+            txtClave.value = '';
+            txtClave.required = true;
+            txtNombre.value = '';
+            txtDireccion.value = '';
+            txtTelefono.value = '';
+            btnGuardarUsuario.textContent = 'Guardar Usuario';
+            btnGuardarUsuario.className = 'btn btn-success btn-sm px-3';
+            txtAyudaClave.classList.add('d-none');
+            txtUsuario.focus();
+        }
+
+        // Función global para cargar datos a modificar desde la búsqueda
+        window.cargarDatosUsuarioParaModificar = function (data) {
+            accionUsuario = 'modificar';
+            txtIdUsuario.value = data.idUsuario;
+            txtUsuario.value = data.usuario;
+            txtClave.value = '';
+            txtClave.required = false; // Opcional en modificación para no sobreescribir si no se desea cambiar
+            txtNombre.value = data.nombre;
+            txtDireccion.value = data.direccion;
+            txtTelefono.value = data.telefono;
+
+            btnGuardarUsuario.textContent = 'Actualizar Usuario';
+            btnGuardarUsuario.className = 'btn btn-warning btn-sm px-3';
+            txtAyudaClave.classList.remove('d-none');
+            txtNombre.focus();
+        };
+
+        window.limpiarFormularioUsuarioExterno = limpiarFormularioUsuario;
+    })();
+</script>

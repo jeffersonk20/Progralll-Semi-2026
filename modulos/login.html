@@ -1,0 +1,83 @@
+<div class="card shadow-lg border-0">
+    <div class="card-header bg-dark text-white text-center py-3">
+        <h5 class="mb-1 fw-bold text-info">::.. Acceso al Sistema ..::</h5>
+        <small class="text-secondary">Autenticación de Usuarios</small>
+    </div>
+    <div class="card-body p-4">
+        <form id="frmLogin" autocomplete="off">
+            <div class="mb-3">
+                <label for="txtLoginUsuario" class="form-label text-light small fw-bold">Usuario</label>
+                <div class="input-group">
+                    <span class="input-group-text">@</span>
+                    <input type="text" class="form-control text-white" id="txtLoginUsuario" name="usuario" placeholder="Ingrese su usuario" required autofocus maxlength="35">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="txtLoginClave" class="form-label text-light small fw-bold">Contraseña</label>
+                <div class="input-group">
+                    <span class="input-group-text">&#128274;</span>
+                    <input type="password" class="form-control text-white" id="txtLoginClave" name="clave" placeholder="Ingrese su contraseña" required maxlength="35">
+                </div>
+            </div>
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary fw-bold py-2" id="btnIniciarSesion">
+                    Iniciar Sesión
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer bg-dark text-center py-2 border-top border-secondary">
+        <small class="text-muted">Si no está registrado en la base de datos se denegará el acceso.</small>
+    </div>
+</div>
+
+<script>
+    document.getElementById('frmLogin').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const usuarioInput = document.getElementById('txtLoginUsuario').value.trim();
+        const claveInput = document.getElementById('txtLoginClave').value.trim();
+        const btnSubmit = document.getElementById('btnIniciarSesion');
+
+        if (!usuarioInput || !claveInput) {
+            if (typeof alertify !== 'undefined') {
+                alertify.warning('Por favor ingrese usuario y contraseña.');
+            }
+            return;
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Verificando...';
+
+        try {
+            const respuesta = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    usuario: usuarioInput,
+                    clave: claveInput
+                })
+            });
+
+            const data = await respuesta.json();
+
+            if (data.status === 'ok') {
+                loginExitoso(data.usuario);
+            } else {
+                if (typeof alertify !== 'undefined') {
+                    alertify.error(data.msg || 'Acceso denegado: Usuario o contraseña no válidos.');
+                }
+                document.getElementById('txtLoginClave').value = '';
+                document.getElementById('txtLoginClave').focus();
+            }
+        } catch (error) {
+            if (typeof alertify !== 'undefined') {
+                alertify.error('Error de comunicación con el backend.');
+            }
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Iniciar Sesión';
+        }
+    });
+</script>
