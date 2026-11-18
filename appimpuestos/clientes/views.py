@@ -3,7 +3,7 @@ from django.http import HttpResponse,JsonResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 # pyrefly: ignore[missing-import]
-from .models import clientes 
+from .models import clientes
 
 # Create your views here.
 def hola_mundo(request):
@@ -19,7 +19,8 @@ def index(request):
 def vistas(request, form):
     return render(request, f"{form}.html")
 
-def buscar_clientes(request, buscar):
+def busqueda_clientes(request):
+    buscar = request.GET.get("buscar")
     datos = clientes.objects.filter(nombre__icontains=buscar).values()
     return JsonResponse({'datos': list(datos)})
 
@@ -38,7 +39,7 @@ def guardar_cliente(request):
                 tipo=datos.get("tipo")
             )
         elif( datos.get("accion")=="modificar" ):
-            editCliente = clientes.objects.get(id=datos.get("idCliente"))
+            editCliente = clientes.objects.get(id=datos.get("id"))
             editCliente.codigo=datos.get("codigo")
             editCliente.nombre=datos.get("nombre")
             editCliente.direccion=datos.get("direccion")
@@ -47,7 +48,7 @@ def guardar_cliente(request):
             editCliente.tipo=datos.get("tipo")
             editCliente.save()
         elif( datos.get("accion")=="eliminar" ):
-            editCliente = clientes.objects.get(id=datos.get("idCliente"))
+            editCliente = clientes.objects.get(id=datos.get("id"))
             editCliente.delete()
         return JsonResponse({'msg':'ok', 'id': editCliente.id})
     else:
