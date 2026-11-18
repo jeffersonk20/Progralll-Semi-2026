@@ -44,6 +44,10 @@
                 let form = e.target.dataset.form;
                 cargarForm(form);
             });
+            let zIndex = 1;
+            $(document).on('click', '.position-absolute', function() {
+                $(this).css('z-index', ++zIndex);
+            });
         });
         function cargarForm(form, callback){
             if( $(`#${form} > form`).length<=0 ){
